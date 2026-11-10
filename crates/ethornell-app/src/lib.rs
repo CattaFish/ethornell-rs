@@ -3,7 +3,7 @@
 #[inline]
 pub fn android_probe_log(msg: &str) {
     use std::ffi::CString;
-    extern "C" {
+    unsafe extern "C" {
         fn __android_log_print(prio: i32, tag: *const std::os::raw::c_char, fmt: *const std::os::raw::c_char, ...) -> i32;
     }
     if let (Ok(tag), Ok(msg)) = (CString::new("EthornellProbe"), CString::new(msg)) {
