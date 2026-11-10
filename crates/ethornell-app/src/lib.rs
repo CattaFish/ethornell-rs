@@ -1,3 +1,22 @@
+
+#[cfg(target_os = "android")]
+#[inline]
+pub fn android_probe_log(msg: &str) {
+    use std::ffi::CString;
+    extern "C" {
+        fn __android_log_print(prio: i32, tag: *const std::os::raw::c_char, fmt: *const std::os::raw::c_char, ...) -> i32;
+    }
+    if let (Ok(tag), Ok(msg)) = (CString::new("EthornellProbe"), CString::new(msg)) {
+        unsafe {
+            __android_log_print(4, tag.as_ptr(), b"%s\0".as_ptr() as *const _, msg.as_ptr());
+        }
+    }
+}
+#[cfg(not(target_os = "android"))]
+#[inline]
+pub fn android_probe_log(msg: &str) {
+    eprintln!("[EthornellProbe] {}", msg);
+}
 use ethornell_archive::{MagicKind, ResourceManager, detect_magic, scan_game_root};
 use ethornell_audio::AudioSystem;
 use ethornell_core::{EthornellError, GameRoot, Result};
@@ -22544,6 +22563,10 @@ impl ethornell_vm::SysApi for RuntimeTraceApi {
     /// mode again. Windowed, the window is resized at once (sub_461670).
     /// Script coordinates stay in the display mode's logical canvas.
     fn configure_screen_size(&mut self, width: i32, height: i32) {
+        android_probe_log(&format!(
+            "[Sys81:64:configure_screen_size] requested=({}x{}), cur_screen=({}x{}), mode_size={:?}",
+            width, height, self.screen_width, self.screen_height, self.display_mode_size()
+        ));
         let explicit = width != 0 && height != 0;
         self.windowed_size_follows_mode = !explicit;
         self.windowed_client_size = if explicit {
@@ -24005,6 +24028,10 @@ impl ethornell_vm::SysApi for RuntimeTraceApi {
                         "無効なスクリーンサイズが設定されました".into(),
                     ));
                 }
+                android_probe_log(&format!(
+                    "[Sys80:60:CALL] mode={}, pixel_mode={}, fullscreen={}, before_screen=({}x{}), before_mode_size={:?}",
+                    mode, pixel_mode, fullscreen, self.screen_width, self.screen_height, self.display_mode_size()
+                ));
                 self.display_size_index = mode;
                 self.display_pixel_mode = pixel_mode;
                 self.window_mode = i32::from(fullscreen);

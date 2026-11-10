@@ -474,6 +474,10 @@ impl HostRuntime {
         h: u32,
         generation: u64,
     ) -> Result<()> {
+        crate::android_probe_log(&format!(
+            "[install_renderer] Surface=({}x{}), virtual_canvas=({}x{}), display_size_index={}",
+            w, h, self.runtime.api.screen_width, self.runtime.api.screen_height, self.runtime.api.display_size_index
+        ));
         renderer.set_virtual_size(
             self.runtime.api.screen_width.max(1) as f32,
             self.runtime.api.screen_height.max(1) as f32,
